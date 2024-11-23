@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Расчет темпа</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                line-height: 1.6;
+            }
+            label {
+                display: block;
+                margin-bottom: 5px;
+            }
+            input {
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            button {
+                padding: 10px 15px;
+                background-color: #007bff;
+                color: #fff;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            .result {
+                margin-top: 20px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+            @media (max-width: 600px) {
+                body {
+                    max-width: 100%;
+                    margin: 0;
+                    padding: 20px;
+                    line-height: 1.6;
+                    box-sizing: border-box;
+                }
+                input {
+                    width: 100%;
+                    padding: 12px;
+                    margin-bottom: 15px;
+                    box-sizing: border-box;
+                }
+                button {
+                    width: 100%;
+                    padding: 15px;
+                    font-size: 16px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Расчет темпа</h1>
+        <form id="paceForm">
+            <label for="distance">Расстояние (км):</label>
+            <input type="number" id="distance" min="0" step="0.1" required />
+
+            <label for="time">Время (чч:мм[:сс]):</label>
+            <input
+                type="text"
+                id="time"
+                pattern="\d{2}:\d{2}(:\d{2})?"
+                placeholder="00:45:30"
+                required
+            />
+
+            <button type="button" id="calculateButton">Рассчитать</button>
+        </form>
+
+        <div class="result" id="result"></div>
+
+        <h1>Расчет времени на дистанцию</h1>
+        <form id="timeForm">
+            <label for="distance2">Расстояние (км):</label>
+            <input type="number" id="distance2" min="0" step="0.1" required />
+
+            <label for="pace">Темп (мм:сс):</label>
+            <input
+                type="text"
+                id="pace"
+                pattern="\d{2}:\d{2}"
+                placeholder="04:30"
+                required
+            />
+
+            <button type="button" id="calculateTimeButton">Рассчитать</button>
+        </form>
+
+        <div class="result" id="resultTime"></div>
+
+        <script>
+            // Функция для расчета темпа
+            function calculatePace(distanceKm, hours, minutes, seconds) {
+                const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                const paceSecondsPerKm = totalSeconds / distanceKm;
+                const paceMinutes = Math.floor(paceSecondsPerKm / 60);
+                const paceSeconds = Math.round(paceSecondsPerKm % 60);
+                return `${paceMinutes}:${paceSeconds.toString().padStart(2, "0")} мин/км`;
+            }
+
+            // Функция для расчета времени на дистанцию
+            function calculateTime(distanceKm, paceMinutes, paceSeconds) {
+                const totalPaceSeconds = paceMinutes * 60 + paceSeconds;
+                const totalSeconds = totalPaceSeconds * distanceKm;
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = Math.round(totalSeconds % 60);
+                return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+            }
+
+            // Обработчик для кнопки "Рассчитать" темп
+            document
+                .getElementById("calculateButton")
+                .addEventListener("click", () => {
+                    const distance = parseFloat(
+                        document.getElementById("distance").value,
+                    );
+                    const time = document.getElementById("time").value;
+
+                    // Парсим время из формата hh:mm[:ss]
+                    const timeParts = time.split(":");
+                    if (timeParts.length < 2 || timeParts.length > 3) {
+                        document.getElementById("result").textContent =
+                            "Введите корректное время в формате чч:мм[:сс]";
+                        return;
+                    }
+
+                    const hours = parseInt(timeParts[0], 10);
+                    const minutes = parseInt(timeParts[1], 10);
+                    const seconds =
+                        timeParts.length === 3 ? parseInt(timeParts[2], 10) : 0;
+
+                    if (
+                        distance > 0 &&
+                        !isNaN(hours) &&
+                        !isNaN(minutes) &&
+                        !isNaN(seconds)
+                    ) {
+                        const pace = calculatePace(
+                            distance,
+                            hours,
+                            minutes,
+                            seconds,
+                        );
+                        document.getElementById("result").textContent =
+                            `Ваш темп: ${pace}`;
+                    } else {
+                        document.getElementById("result").textContent =
+                            "Введите корректные данные.";
+                    }
+                });
+
+            // Обработчик для кнопки "Рассчитать" время
+            document
+                .getElementById("calculateTimeButton")
+                .addEventListener("click", () => {
+                    const distance = parseFloat(
+                        document.getElementById("distance2").value,
+                    );
+                    const pace = document.getElementById("pace").value;
+
+                    // Парсим темп из формата mm:ss
+                    const paceParts = pace.split(":");
+                    if (paceParts.length !== 2) {
+                        document.getElementById("resultTime").textContent =
+                            "Введите корректный темп в формате мм:сс";
+                        return;
+                    }
+
+                    const paceMinutes = parseInt(paceParts[0], 10);
+                    const paceSeconds = parseInt(paceParts[1], 10);
+
+                    if (
+                        distance > 0 &&
+                        !isNaN(paceMinutes) &&
+                        !isNaN(paceSeconds)
+                    ) {
+                        const totalTime = calculateTime(
+                            distance,
+                            paceMinutes,
+                            paceSeconds,
+                        );
+                        document.getElementById("resultTime").textContent =
+                            `Время на дистанцию: ${totalTime}`;
+                    } else {
+                        document.getElementById("resultTime").textContent =
+                            "Введите корректные данные.";
+                    }
+                });
+        </script>
+    </body>
+</html>
